@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Attendance</h2>
+        <p class="page-subtitle">Record daily student attendance and maintain session compliance</p>
+    </div>
+    {% if students_with_attendance %}
+        <button type="button" id="markAllPresentBtn" class="btn btn-outline-success rounded-pill px-3 fw-bold small">
+            <i class="bi bi-check-all me-1"></i> Mark All Present
+        </button>
+    {% endif %}
+</div>
+
+<!-- Tabs & Filter Bar (Matching Screen 7) -->
+<div class="acadify-card mb-4 p-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom pb-3 mb-3">
+        <ul class="nav nav-pills" id="attendanceTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active rounded-pill fw-bold py-1 px-3 small" href="#">Daily Attendance</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted rounded-pill fw-semibold py-1 px-3 small" href="{% if request.user.is_admin_user %}{% url 'admin_attendance' %}{% else %}#{% endif %}">Monthly Report</a>
+            </li>
+        </ul>
+        <span class="small text-muted">
+            <i class="bi bi-calendar3 me-1"></i> Today: {{ today }}
+        </span>
+    </div>
+
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <label class="form-label small fw-bold text-dark mb-1">Select Date</label>
+            <input type="date" name="date" value="{{ selected_date }}" class="form-control rounded-3" max="{{ today }}">
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small fw-bold text-dark mb-1">Select Subject</label>
+            <select name="subject" class="form-select rounded-3">
+                {% for sub in assigned_subjects %}
+                    <option value="{{ sub.id }}" {% if selected_subject.id == sub.id %}selected{% endif %}>
+                        {{ sub.code }} - {{ sub.name }} (Sem {{ sub.semester }})
+                    </option>
+                {% empty %}
+                    <option value="">No subjects assigned</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center py-2">
+                <i class="bi bi-funnel"></i> Show
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Attendance Form & Table (Matching Screen 7) -->
+{% if selected_subject %}
+    <div class="acadify-card">
+        <div class="card-title-header">
+            <div>
+                <h5>{{ selected_subject.name }} ({{ selected_subject.code }})</h5>
+                <span class="small text-muted">{{ selected_date }} &bull; Course: {{ selected_subject.course.code }} &bull; Semester {{ selected_subject.semester }}</span>
+            </div>
+            <span class="badge bg-light text-primary border px-3 py-2 rounded-pill fw-semibold">
+                {{ students_with_attendance|length }} Enrolled Students
+            </span>
+        </div>
+
+        {% if students_with_attendance %}
+            <form method="POST" action="{% url 'teacher_attendance' %}?date={{ selected_date }}&subject={{ selected_subject.id }}">
+                {% csrf_token %}
+
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th class="text-center">Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in students_with_attendance %}
+                                <tr>
+                                    <td class="text-muted small">{{ forloop.counter }}</td>
+                                    <td class="fw-bold text-primary">{{ item.student.student_id }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ item.student.user.display_name }}</div>
+                                        <span class="small text-muted">{{ item.student.user.email }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- Attendance Status Radio Buttons -->
+                                        <div class="attendance-pills">
+                                            <input type="radio" name="status_{{ item.student.id }}" id="p_{{ item.student.id }}" value="PRESENT" {% if item.status == 'PRESENT' %}checked{% endif %}>
+                                            <label for="p_{{ item.student.id }}">Present</label>
+
+                                            <input type="radio" name="status_{{ item.student.id }}" id="a_{{ item.student.id }}" value="ABSENT" {% if item.status == 'ABSENT' %}checked{% endif %}>
+                                            <label for="a_{{ item.student.id }}">Absent</label>
+
+                                            <input type="radio" name="status_{{ item.student.id }}" id="l_{{ item.student.id }}" value="LATE" {% if item.status == 'LATE' %}checked{% endif %}>
+                                            <label for="l_{{ item.student.id }}">Late</label>
+
+                                            <input type="radio" name="status_{{ item.student.id }}" id="lv_{{ item.student.id }}" value="LEAVE" {% if item.status == 'LEAVE' %}checked{% endif %}>
+                                            <label for="lv_{{ item.student.id }}">Leave</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="remarks_{{ item.student.id }}" class="form-control form-control-sm rounded-2" placeholder="Optional remark" style="max-width: 200px;">
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <span class="small text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i> Changes will overwrite previous records for this date without creating duplicates.
+                    </span>
+                    <button type="submit" class="btn btn-acadify px-4 py-2">
+                        <i class="bi bi-floppy-fill me-1"></i> Save Attendance
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                <div class="empty-state-title">No enrolled students for this class</div>
+                <p class="empty-state-desc">There are no active students enrolled in {{ selected_subject.course.code }} Semester {{ selected_subject.semester }}.</p>
+            </div>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="acadify-card">
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-journal-x"></i></div>
+            <div class="empty-state-title">No teaching subjects assigned</div>
+            <p class="empty-state-desc">You are not currently assigned to any active course subjects. Please contact the administrator.</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

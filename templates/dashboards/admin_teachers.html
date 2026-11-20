@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Management - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Faculty & Teachers</h2>
+        <p class="page-subtitle">Manage professors, lecturers, designations, and department affiliations</p>
+    </div>
+    <a href="{% url 'admin_teacher_add' %}" class="btn btn-acadify">
+        <i class="bi bi-person-plus-fill"></i>
+        <span>Add Teacher</span>
+    </a>
+</div>
+
+<!-- Filters Bar -->
+<div class="acadify-card mb-4 p-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by name, employee ID, or email...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="department" class="form-select" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                    <option value="{{ d.id }}" {% if selected_dept == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center">Filter</button>
+            {% if query or selected_dept %}
+                <a href="{% url 'admin_teachers' %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Teachers Table -->
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Teacher Name</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Office Room</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in page_obj %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ t.employee_id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if t.user.avatar %}
+                                        <img src="{{ t.user.avatar.url }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-light text-primary fw-bold d-flex align-items-center justify-content-center small" style="width: 32px; height: 32px;">
+                                            {{ t.user.first_name|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ t.user.display_name }}</div>
+                                        <div class="small text-muted" style="font-size: 0.78rem;">{{ t.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ t.department.code|default:"-" }}</td>
+                            <td>{{ t.designation }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ t.office_room|default:"-" }}</span></td>
+                            <td>
+                                {% if t.user.is_active %}
+                                    <span class="badge badge-present">Active</span>
+                                {% else %}
+                                    <span class="badge badge-absent">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{% url 'admin_teacher_edit' t.id %}" class="btn-sm-action" title="Edit Profile">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'admin_teacher_toggle_status' t.id %}" class="btn-sm-action {% if t.user.is_active %}danger{% endif %}" title="Toggle Active Status" onclick="return confirm('Toggle status for this teacher?');">
+                                        <i class="bi bi-power"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&department={{ selected_dept }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&department={{ selected_dept }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-person-badge"></i></div>
+            <div class="empty-state-title">No faculty members found</div>
+            <p class="empty-state-desc">There are currently no teacher records matching the search or registered in the database.</p>
+            <a href="{% url 'admin_teacher_add' %}" class="btn btn-acadify">Add First Teacher</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

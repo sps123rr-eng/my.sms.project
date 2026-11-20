@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Dashboard - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Dashboard</h2>
+        <p class="page-subtitle">Welcome back, {{ request.user.display_name }}! Here's your faculty overview for today.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-white text-dark shadow-sm border py-2 px-3 rounded-pill fw-semibold">
+            <i class="bi bi-calendar-event me-1 text-primary"></i> {{ today|date:"l, d M Y" }}
+        </span>
+    </div>
+</div>
+
+<!-- 4 Metric Cards (Matching Screen 4) -->
+<div class="row g-4 mb-4">
+    <!-- My Classes -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-primary">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">My Classes</span>
+                <span class="stat-value">{{ my_classes_count }}</span>
+                <a href="{% url 'teacher_classes' %}" class="small text-primary text-decoration-none fw-bold mt-1">
+                    View classes &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Students -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-info">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Students</span>
+                <span class="stat-value">{{ total_assigned_students }}</span>
+                <a href="{% url 'teacher_students' %}" class="small text-primary text-decoration-none fw-bold mt-1">
+                    View students &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Submissions -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-warning">
+                <i class="bi bi-inbox-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Pending Submissions</span>
+                <span class="stat-value">{{ pending_submissions }}</span>
+                <a href="{% url 'teacher_submissions' %}" class="small text-warning text-decoration-none fw-bold mt-1">
+                    View submissions &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Requests -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-danger">
+                <i class="bi bi-envelope-paper-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Leave Requests</span>
+                <span class="stat-value">{{ pending_leaves }}</span>
+                <a href="{% url 'teacher_leaves' %}" class="small text-danger text-decoration-none fw-bold mt-1">
+                    Review requests &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Middle Section: Today's Classes & Quick Attendance (Screen 4) -->
+<div class="row g-4">
+    <!-- Today's Classes Table -->
+    <div class="col-lg-8">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <div>
+                    <h5>Today's Classes</h5>
+                    <span class="small text-muted">{{ day_name }} Schedule</span>
+                </div>
+                <a href="{% url 'teacher_classes' %}" class="small text-primary text-decoration-none fw-bold">View Full Timetable</a>
+            </div>
+
+            {% if today_classes %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Subject</th>
+                                <th>Class / Course</th>
+                                <th>Room</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in today_classes %}
+                                <tr>
+                                    <td class="fw-bold text-primary">
+                                        {{ c.start_time|time:"H:i" }} - {{ c.end_time|time:"H:i" }}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ c.subject.name }}</div>
+                                        <span class="small text-muted">{{ c.subject.code }}</span>
+                                    </td>
+                                    <td>
+                                        {{ c.subject.course.code }} (Sem {{ c.subject.semester }})
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">{{ c.room_number }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'teacher_attendance' %}?subject={{ c.subject.id }}" class="btn btn-sm btn-acadify py-1 px-3" style="font-size: 0.8rem;">
+                                            <i class="bi bi-calendar-check me-1"></i> Attendance
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state py-4">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-calendar2-check"></i>
+                    </div>
+                    <div class="empty-state-title">No scheduled classes for today</div>
+                    <p class="empty-state-desc">You do not have any teaching sessions scheduled for {{ day_name }}. Enjoy your preparation time!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Operations & Announcements -->
+    <div class="col-lg-4">
+        <div class="acadify-card mb-4">
+            <div class="card-title-header mb-3">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="{% url 'teacher_attendance' %}" class="btn btn-acadify justify-content-center">
+                    <i class="bi bi-check2-square"></i>
+                    <span>Mark Daily Attendance</span>
+                </a>
+                <a href="{% url 'teacher_assignment_create' %}" class="btn btn-acadify-outline justify-content-center">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Create Assignment</span>
+                </a>
+                <a href="{% url 'teacher_study_materials' %}" class="btn btn-acadify-outline justify-content-center">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <span>Upload Study Resource</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="acadify-card">
+            <div class="card-title-header mb-2">
+                <h5>Announcements</h5>
+                <a href="{% url 'teacher_notices' %}" class="small text-primary text-decoration-none fw-bold">View All</a>
+            </div>
+            {% if recent_notices %}
+                <div class="list-group list-group-flush">
+                    {% for n in recent_notices %}
+                        <div class="list-group-item px-0 py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold small mb-1 text-dark">{{ n.title }}</h6>
+                                <span class="badge badge-category">{{ n.get_category_display }}</span>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.75rem;">{{ n.published_date|date:"d M Y" }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small text-center my-3">No campus notices posted yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

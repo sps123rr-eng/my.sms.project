@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Examination Results - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Results & Grades</h2>
+        <p class="page-subtitle">Official semester grade sheet, continuous assessment, and university marks</p>
+    </div>
+    <!-- Semester Selector Dropdown (Screen 10) -->
+    <div class="dropdown">
+        <button class="btn btn-white border bg-white shadow-sm dropdown-toggle rounded-pill px-4 fw-bold text-dark" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-mortarboard me-1 text-primary"></i> Semester {{ selected_semester }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+            {% for s in semesters_range %}
+                <li>
+                    <a class="dropdown-item {% if s == selected_semester %}active{% endif %}" href="?semester={{ s }}">
+                        Semester {{ s }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Results Card (Matching Screen 10) -->
+<div class="acadify-card mb-4">
+    <div class="card-title-header">
+        <div>
+            <h5>Semester {{ selected_semester }} Grade Sheet</h5>
+            <span class="small text-muted">{{ student.course.name|default:"Degree Program" }}</span>
+        </div>
+        <span class="badge bg-light text-primary border px-3 py-1 rounded-pill">Official Transcript</span>
+    </div>
+
+    {% if results %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th class="text-center">Internal (30)</th>
+                        <th class="text-center">End Sem (70)</th>
+                        <th class="text-center">Total (100)</th>
+                        <th class="text-center">Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ r.subject.name }}</div>
+                                <span class="small text-muted">{{ r.subject.code }} &bull; {{ r.subject.credits }} Credits</span>
+                            </td>
+                            <td class="text-center fw-semibold text-muted">{{ r.internal_marks }}</td>
+                            <td class="text-center fw-semibold text-muted">{{ r.end_sem_marks }}</td>
+                            <td class="text-center fw-bold text-dark">{{ r.total_marks }}</td>
+                            <td class="text-center">
+                                {% if r.grade == 'A+' or r.grade == 'A' %}
+                                    <span class="badge badge-present px-3">{{ r.grade }}</span>
+                                {% elif r.grade == 'B+' or r.grade == 'B' %}
+                                    <span class="badge bg-primary-subtle text-primary border px-3">{{ r.grade }}</span>
+                                {% elif r.grade == 'C' or r.grade == 'D' %}
+                                    <span class="badge badge-late px-3">{{ r.grade }}</span>
+                                {% else %}
+                                    <span class="badge badge-absent px-3">{{ r.grade }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Grade Summary Footer (Screen 10) -->
+        <div class="row g-3 mt-4 pt-3 border-top align-items-center">
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="small text-muted d-block fw-semibold">Semester CGPA</span>
+                    <span class="fs-3 fw-bold text-primary">{{ cgpa }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="small text-muted d-block fw-semibold">Total Percentage</span>
+                    <span class="fs-3 fw-bold text-success">{{ percentage }}%</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center border">
+                    <span class="small text-muted d-block fw-semibold">Total Marks Awarded</span>
+                    <span class="fs-3 fw-bold text-dark">{{ total_obtained }} / {{ total_maximum }}</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-award"></i></div>
+            <div class="empty-state-title">No examination results published yet</div>
+            <p class="empty-state-desc">Results for Semester {{ selected_semester }} have not been finalized or published by the examination board.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

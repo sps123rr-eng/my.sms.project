@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & Analytics - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Reports & Academic Analytics</h2>
+        <p class="page-subtitle">Aggregate university operational metrics, departmental enrollments, and collections</p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary rounded-3 fw-bold small bg-white shadow-sm" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print Report
+    </button>
+</div>
+
+<!-- Metrics Row -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-primary">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Enrollment</span>
+                <span class="stat-value">{{ total_students }}</span>
+                <span class="stat-trend trend-up">Active students</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-info">
+                <i class="bi bi-person-workspace"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Faculty Staff</span>
+                <span class="stat-value">{{ total_teachers }}</span>
+                <span class="stat-trend trend-neutral">Instructors</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-success">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Realized Fees</span>
+                <span class="stat-value text-success">${{ total_fees_collected }}</span>
+                <span class="stat-trend trend-up">Collected</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-danger">
+                <i class="bi bi-hourglass-bottom"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Pending Dues</span>
+                <span class="stat-value text-danger">${{ total_fees_pending }}</span>
+                <span class="stat-trend trend-down">Outstanding</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Department Distribution Table -->
+    <div class="col-lg-8">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Department Academic Summary</h5>
+                <span class="badge bg-light text-primary border">Enrolled Distribution</span>
+            </div>
+            {% if dept_summary %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Department</th>
+                                <th>Code</th>
+                                <th>Courses</th>
+                                <th>Students Enrolled</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in dept_summary %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ d.name }}</td>
+                                    <td><span class="badge bg-light text-primary border">{{ d.code }}</span></td>
+                                    <td>{{ d.courses_count }} Programs</td>
+                                    <td class="fw-bold">{{ d.students_count }} Students</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No departmental records found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance Breakdown -->
+    <div class="col-lg-4">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Attendance Status Distribution</h5>
+            </div>
+            {% if attendance_by_status %}
+                <ul class="list-group list-group-flush">
+                    {% for item in attendance_by_status %}
+                        <li class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">
+                                {% if item.status == 'PRESENT' %}
+                                    <i class="bi bi-circle-fill text-success me-2" style="font-size: 0.75rem;"></i> Present
+                                {% elif item.status == 'ABSENT' %}
+                                    <i class="bi bi-circle-fill text-danger me-2" style="font-size: 0.75rem;"></i> Absent
+                                {% elif item.status == 'LATE' %}
+                                    <i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.75rem;"></i> Late
+                                {% else %}
+                                    <i class="bi bi-circle-fill text-primary me-2" style="font-size: 0.75rem;"></i> Leave
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-light text-dark border px-3 py-1 rounded-pill fw-bold">
+                                {{ item.total }} Logs
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted text-center py-4">No attendance marked yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

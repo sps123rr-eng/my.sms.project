@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Leave Applications - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Leave Review Desk</h2>
+        <p class="page-subtitle">Examine student absence requests, approve or reject, and add official remarks</p>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="acadify-card mb-4 p-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by student name, ID or reason...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending Review</option>
+                <option value="APPROVED" {% if selected_status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                <option value="REJECTED" {% if selected_status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center">Filter</button>
+            {% if query or selected_status %}
+                <a href="{% if request.user.is_teacher_user %}{% url 'teacher_leaves' %}{% else %}{% url 'admin_leaves' %}{% endif %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Review Table -->
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Date Range</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ l.student.user.display_name }}</div>
+                                <span class="small text-muted">{{ l.student.student_id }}</span>
+                            </td>
+                            <td>{{ l.start_date|date:"d M Y" }} &ndash; {{ l.end_date|date:"d M Y" }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ l.total_days }}</span></td>
+                            <td>{{ l.reason }}</td>
+                            <td>
+                                {% if l.status == 'APPROVED' %}
+                                    <span class="badge badge-present">Approved</span>
+                                {% elif l.status == 'REJECTED' %}
+                                    <span class="badge badge-absent">Rejected</span>
+                                {% else %}
+                                    <span class="badge badge-late">Pending Review</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if l.status == 'PENDING' %}
+                                    <button type="button" class="btn btn-sm btn-acadify py-1 px-3" data-bs-toggle="modal" data-bs-target="#reviewModal{{ l.id }}">
+                                        Review
+                                    </button>
+                                {% else %}
+                                    <span class="small text-muted">Reviewed</span>
+                                {% endif %}
+
+                                <!-- Modal for this leave -->
+                                <div class="modal fade text-start" id="reviewModal{{ l.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <div class="modal-header border-bottom pb-3">
+                                                <h5 class="modal-title fw-bold">Review Leave Request</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="{% if request.user.is_teacher_user %}{% url 'teacher_leave_review' l.id %}{% else %}{% url 'admin_leave_review' l.id %}{% endif %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <p class="mb-1"><strong>Student:</strong> {{ l.student.user.display_name }} ({{ l.student.student_id }})</p>
+                                                    <p class="mb-1"><strong>Period:</strong> {{ l.start_date|date:"d M Y" }} &ndash; {{ l.end_date|date:"d M Y" }} ({{ l.total_days }} days)</p>
+                                                    <p class="mb-3"><strong>Reason:</strong> {{ l.reason }}</p>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-bold">Decision *</label>
+                                                        <select name="action" class="form-select rounded-3" required>
+                                                            <option value="APPROVE">Approve Leave</option>
+                                                            <option value="REJECT">Reject Leave</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Admin Remarks</label>
+                                                        <textarea name="admin_remarks" rows="2" class="form-control rounded-3" placeholder="Approval conditions or rejection reason"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-top pt-3">
+                                                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-acadify">Save Decision</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}&q={{ query }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}&q={{ query }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-envelope-paper"></i></div>
+            <div class="empty-state-title">No leave applications found</div>
+            <p class="empty-state-desc">There are no pending student absence applications matching the criteria.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

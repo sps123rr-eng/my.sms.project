@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Dashboard</h2>
+        <p class="page-subtitle">Welcome back, {{ request.user.first_name|default:"Admin" }}! Here's what's happening across campus today.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-white text-dark shadow-sm border py-2 px-3 rounded-pill fw-semibold">
+            <i class="bi bi-calendar3 me-1 text-primary"></i> {{ today|date:"l, d F Y" }}
+        </span>
+    </div>
+</div>
+
+<!-- 4 Dynamic Stat Cards (Matching Screen 3) -->
+<div class="row g-4 mb-4">
+    <!-- Total Students -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-primary">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Students</span>
+                <span class="stat-value">{{ total_students }}</span>
+                <span class="stat-trend trend-up">
+                    <i class="bi bi-person-check-fill"></i> Active Enrolled
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Teachers -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-info">
+                <i class="bi bi-person-workspace"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Teachers</span>
+                <span class="stat-value">{{ total_teachers }}</span>
+                <span class="stat-trend trend-neutral">
+                    <i class="bi bi-award"></i> Academic Faculty
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Courses -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-warning">
+                <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Courses</span>
+                <span class="stat-value">{{ total_courses }}</span>
+                <span class="stat-trend trend-up">
+                    <i class="bi bi-building"></i> {{ total_departments }} Departments
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Attendance -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-success">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Today's Attendance</span>
+                <span class="stat-value">{{ today_att_rate }}%</span>
+                <span class="stat-trend {% if today_att_rate >= 75 %}trend-up{% else %}trend-down{% endif %}">
+                    {% if today_total > 0 %}
+                        {{ today_present }} present / {{ today_total }} marked
+                    {% else %}
+                        No records marked today
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Middle Charts Row (Screen 3) -->
+<div class="row g-4 mb-4">
+    <!-- Attendance Overview Chart -->
+    <div class="col-lg-8">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <div>
+                    <h5>Attendance Overview</h5>
+                    <span class="small text-muted">Monthly campus attendance trends</span>
+                </div>
+                <a href="{% url 'admin_attendance' %}" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold small text-primary">
+                    View Records <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div style="height: 290px; position: relative;">
+                <canvas id="attendanceTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department-wise Students Donut Chart -->
+    <div class="col-lg-4">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <div>
+                    <h5>Department Students</h5>
+                    <span class="small text-muted">Distribution by department</span>
+                </div>
+            </div>
+            <div style="height: 290px; position: relative;">
+                <canvas id="departmentDonutChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Activities & Events Row (Screen 3) -->
+<div class="row g-4">
+    <!-- Recent Activities Feed -->
+    <div class="col-lg-7">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Recent Activities</h5>
+                <span class="badge bg-light text-muted border">Live Database Feed</span>
+            </div>
+            {% if recent_activities %}
+                <div class="list-group list-group-flush">
+                    {% for act in recent_activities %}
+                        <div class="list-group-item px-0 py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="btn-sm-action rounded-circle">
+                                    <i class="bi bi-activity text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-bold small text-dark">
+                                        {{ act.user.display_name|default:"System" }} &bull; <span class="fw-normal text-muted">{{ act.action }}</span>
+                                    </p>
+                                    <span class="badge bg-light text-muted rounded-pill mt-1" style="font-size: 0.7rem;">
+                                        {{ act.module }}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="small text-muted" style="font-size: 0.75rem;">
+                                {{ act.timestamp|timesince }} ago
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state py-4">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="empty-state-title">No recent activity logs</div>
+                    <p class="empty-state-desc">As administrative operations and user actions occur, they will appear dynamically here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upcoming Events & Notices -->
+    <div class="col-lg-5">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Campus Announcements</h5>
+                <a href="{% url 'admin_notices' %}" class="small text-primary text-decoration-none fw-bold">View All</a>
+            </div>
+            {% if recent_notices %}
+                <div class="list-group list-group-flush">
+                    {% for notice in recent_notices %}
+                        <div class="list-group-item px-0 py-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="fw-bold mb-0 text-dark small">{{ notice.title }}</h6>
+                                <span class="badge badge-category">{{ notice.get_category_display }}</span>
+                            </div>
+                            <p class="text-muted small mb-1" style="font-size: 0.8rem;">{{ notice.content|truncatewords:15 }}</p>
+                            <div class="d-flex justify-content-between align-items-center" style="font-size: 0.75rem;">
+                                <span class="text-muted"><i class="bi bi-person me-1"></i> {{ notice.author.display_name }}</span>
+                                <span class="text-muted"><i class="bi bi-calendar-event me-1"></i> {{ notice.published_date|date:"d M Y" }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state py-4">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-megaphone"></i>
+                    </div>
+                    <div class="empty-state-title">No notices published yet</div>
+                    <p class="empty-state-desc">Publish college announcements and event updates to inform faculty and students.</p>
+                    <a href="{% url 'admin_notices' %}" class="btn btn-sm btn-acadify">Create Notice</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const monthLabels = {{ month_labels_json|safe }};
+        const monthData = {{ month_data_json|safe }};
+        initAttendanceTrendChart('attendanceTrendChart', monthLabels, monthData);
+
+        const deptLabels = {{ dept_labels_json|safe }};
+        const deptCounts = {{ dept_counts_json|safe }};
+        initDepartmentDonutChart('departmentDonutChart', deptLabels, deptCounts);
+    });
+</script>
+{% endblock %}

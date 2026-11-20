@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Department - Acadify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title">Edit Department</h2>
+                <p class="page-subtitle">{{ dept.name }} ({{ dept.code }})</p>
+            </div>
+            <a href="{% url 'admin_departments' %}" class="btn btn-acadify-outline">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="acadify-card">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Department Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Department Code *</label>
+                    {{ form.code }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Head of Department</label>
+                    {{ form.head_of_department }}
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Description</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="{% url 'admin_departments' %}" class="btn btn-acadify-outline">Cancel</a>
+                    <button type="submit" class="btn btn-acadify">Update Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

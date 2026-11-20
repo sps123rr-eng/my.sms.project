@@ -1,0 +1,103 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Create Your Account - Acadify{% endblock %}
+
+{% block auth_content %}
+<div class="mb-3">
+    <h3 class="fw-bold text-dark mb-1">Create Your Account</h3>
+    <p class="text-muted small">Join Acadify and start your academic journey</p>
+</div>
+
+<form method="POST" action="{% url 'register' %}" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+            {% for error in form.non_field_errors %}
+                <div><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="mb-2">
+        <label for="{{ form.full_name.id_for_label }}" class="form-label small fw-bold text-dark mb-1">Full Name</label>
+        {{ form.full_name }}
+        {% if form.full_name.errors %}
+            <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-2">
+        <label for="{{ form.email.id_for_label }}" class="form-label small fw-bold text-dark mb-1">Email Address</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-2">
+        <label for="{{ form.username.id_for_label }}" class="form-label small fw-bold text-dark mb-1">Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="row g-2 mb-2">
+        <div class="col-6">
+            <label for="{{ form.password.id_for_label }}" class="form-label small fw-bold text-dark mb-1">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="col-6">
+            <label for="{{ form.confirm_password.id_for_label }}" class="form-label small fw-bold text-dark mb-1">Confirm</label>
+            {{ form.confirm_password }}
+            {% if form.confirm_password.errors %}
+                <div class="text-danger small mt-1">{{ form.confirm_password.errors.0 }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Role Selection Radio Pills matching reference design -->
+    <div class="mb-3">
+        <label class="form-label small fw-bold text-dark mb-1">Select Role</label>
+        <div class="role-selector-group">
+            <div class="role-radio-btn">
+                <input type="radio" name="role" id="role_student" value="STUDENT" checked>
+                <label for="role_student">
+                    <i class="bi bi-person-fill d-block fs-5 mb-1"></i>
+                    Student
+                </label>
+            </div>
+            <div class="role-radio-btn">
+                <input type="radio" name="role" id="role_teacher" value="TEACHER">
+                <label for="role_teacher">
+                    <i class="bi bi-mortarboard d-block fs-5 mb-1"></i>
+                    Teacher
+                </label>
+            </div>
+            <div class="role-radio-btn">
+                <input type="radio" name="role" id="role_admin" value="ADMIN">
+                <label for="role_admin">
+                    <i class="bi bi-shield-lock-fill d-block fs-5 mb-1"></i>
+                    Admin
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-acadify w-100 py-2 justify-content-center">
+        <span>Register</span>
+        <i class="bi bi-arrow-right"></i>
+    </button>
+
+    <div class="text-center mt-3">
+        <p class="small text-muted mb-0">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="text-primary fw-bold text-decoration-none">Login</a>
+        </p>
+    </div>
+</form>
+{% endblock %}

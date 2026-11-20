@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Assignment - {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title">Submit Assignment</h2>
+                <p class="page-subtitle">{{ assignment.subject.name }} ({{ assignment.subject.code }})</p>
+            </div>
+            <a href="{% url 'student_assignments' %}" class="btn btn-acadify-outline">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <!-- Assignment Brief Card -->
+        <div class="acadify-card mb-4">
+            <div class="card-title-header mb-2">
+                <h5 class="fw-bold text-dark">{{ assignment.title }}</h5>
+                <span class="badge bg-light text-primary border">Max: {{ assignment.max_marks }} marks</span>
+            </div>
+            <p class="text-muted small mb-3">{{ assignment.description|linebreaks }}</p>
+            <div class="d-flex flex-wrap gap-4 text-muted small border-top pt-3">
+                <span><i class="bi bi-person me-1"></i> Instructor: <strong>{{ assignment.created_by.display_name }}</strong></span>
+                <span><i class="bi bi-calendar3 me-1"></i> Due Date: <strong>{{ assignment.due_date|date:"d M Y" }}</strong></span>
+                {% if assignment.attachment %}
+                    <a href="{{ assignment.attachment.url }}" download class="text-primary text-decoration-none fw-bold">
+                        <i class="bi bi-download me-1"></i> Download Task Attachment
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Submission Form Card -->
+        <div class="acadify-card">
+            <div class="card-title-header">
+                <h5>Your Solution</h5>
+                {% if submission %}
+                    <span class="badge badge-present">Already Submitted ({{ submission.submitted_at|date:"d M Y H:i" }})</span>
+                {% else %}
+                    <span class="badge badge-pending">New Submission</span>
+                {% endif %}
+            </div>
+
+            {% if submission and submission.status == 'GRADED' %}
+                <div class="alert alert-success rounded-3 mb-4">
+                    <h6 class="fw-bold mb-1"><i class="bi bi-award-fill me-1"></i> Graded Solution</h6>
+                    <p class="mb-1"><strong>Marks Obtained:</strong> {{ submission.marks_obtained }} / {{ assignment.max_marks }}</p>
+                    {% if submission.feedback %}
+                        <p class="mb-0"><strong>Faculty Feedback:</strong> {{ submission.feedback }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Attach Solution File *</label>
+                    {{ form.attachment }}
+                    {% if submission and submission.attachment %}
+                        <div class="small text-muted mt-1">Current file: <a href="{{ submission.attachment.url }}" target="_blank">View uploaded solution</a></div>
+                    {% endif %}
+                    <div class="form-text small text-muted">Accepted formats: PDF, DOC, DOCX, ZIP, code files (PY, JAVA, CPP), TXT.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Notes or Submission Comments (Optional)</label>
+                    {{ form.notes }}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="{% url 'student_assignments' %}" class="btn btn-acadify-outline">Cancel</a>
+                    <button type="submit" class="btn btn-acadify">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Submit Solution
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

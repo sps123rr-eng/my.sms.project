@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Weekly Timetable - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Timetable</h2>
+        <p class="page-subtitle">Weekly academic lecture schedule and classroom allocations</p>
+    </div>
+    {% if request.user.is_admin_user %}
+        <button type="button" class="btn btn-acadify" data-bs-toggle="modal" data-bs-target="#addClassModal">
+            <i class="bi bi-plus-circle me-1"></i> Add Class Slot
+        </button>
+    {% endif %}
+</div>
+
+<!-- Admin Filter -->
+{% if request.user.is_admin_user and courses %}
+    <div class="acadify-card mb-4 p-3">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <select name="course" class="form-select rounded-3" onchange="this.form.submit()">
+                    <option value="">All Courses (Showing overall campus schedule)</option>
+                    {% for c in courses %}
+                        <option value="{{ c.id }}" {% if selected_course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }} ({{ c.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                {% if selected_course %}
+                    <a href="{% url 'admin_timetable' %}" class="btn btn-light border">Reset Filter</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+<!-- Weekly Timetable Grid Card (Screen 8) -->
+<div class="acadify-card">
+    <div class="card-title-header">
+        <h5>Weekly Lecture Schedule</h5>
+        <span class="badge bg-light text-primary border px-3 py-1 rounded-pill">Monday &ndash; Saturday</span>
+    </div>
+
+    <div class="timetable-grid">
+        <!-- Header row -->
+        <div class="timetable-header">Time</div>
+        {% for d in days %}
+            <div class="timetable-header">{{ d }}</div>
+        {% endfor %}
+
+        <!-- Time rows -->
+        {% for row in schedule_matrix %}
+            <!-- Time Column -->
+            <div class="timetable-cell text-center fw-bold text-muted bg-light">
+                {{ row.time_label }}
+            </div>
+
+            <!-- 6 Day Columns -->
+            {% for entry in row.days %}
+                {% if entry %}
+                    <div class="timetable-cell has-class position-relative">
+                        <div class="tt-subject">{{ entry.subject.name }}</div>
+                        <div class="tt-teacher"><i class="bi bi-person me-1"></i>{{ entry.teacher.user.display_name }}</div>
+                        <div class="tt-room"><i class="bi bi-geo-alt me-1"></i>{{ entry.room_number }} (Sec {{ entry.section }})</div>
+                        {% if request.user.is_admin_user %}
+                            <form method="POST" action="{% url 'admin_timetable_delete' entry.id %}" class="position-absolute top-0 end-0 p-1" onsubmit="return confirm('Remove this class slot?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm text-danger border-0 p-0" title="Delete slot"><i class="bi bi-x-circle"></i></button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="timetable-cell text-center text-muted" style="background: #fafbfc;">
+                        <span class="small text-muted" style="font-size: 0.72rem;">&ndash;</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal for Adding Timetable Slot (Admin) -->
+{% if request.user.is_admin_user and form %}
+    <div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-bottom pb-3">
+                    <h5 class="modal-title fw-bold" id="addClassModalLabel">Schedule Class Lecture</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'admin_timetable_add' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Subject</label>
+                            {{ form.subject }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Faculty Instructor</label>
+                            {{ form.teacher }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Day of Week</label>
+                            {{ form.day_of_week }}
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Start Time</label>
+                                {{ form.start_time }}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">End Time</label>
+                                {{ form.end_time }}
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-8">
+                                <label class="form-label small fw-bold">Room Number</label>
+                                {{ form.room_number }}
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-bold">Section</label>
+                                {{ form.section }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top pt-3">
+                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-acadify">Save Slot</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

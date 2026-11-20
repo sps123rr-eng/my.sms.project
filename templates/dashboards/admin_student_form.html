@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Acadify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title">{{ title }}</h2>
+                <p class="page-subtitle">Configure student authentication credentials and academic placement</p>
+            </div>
+            <a href="{% url 'admin_students' %}" class="btn btn-acadify-outline">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+
+        <div class="acadify-card">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">User Account Details</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">First Name *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Email Address *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% if form.username %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Username *</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
+                        </div>
+                    {% endif %}
+                    {% if form.password %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Initial Password *</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors.0 }}</div>{% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Phone Number</label>
+                        {{ form.phone }}
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Academic Enrollment</h6>
+                <div class="row g-3 mb-4">
+                    {% if form.student_id %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Student ID *</label>
+                            {{ form.student_id }}
+                            {% if form.student_id.errors %}<div class="text-danger small">{{ form.student_id.errors.0 }}</div>{% endif %}
+                        </div>
+                    {% endif %}
+                    {% if form.department %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Department</label>
+                            {{ form.department }}
+                        </div>
+                    {% elif departments %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Department</label>
+                            <select name="department" class="form-select rounded-3">
+                                <option value="">Select Department</option>
+                                {% for d in departments %}
+                                    <option value="{{ d.id }}" {% if profile.department_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+
+                    {% if form.course %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Course / Degree Program</label>
+                            {{ form.course }}
+                        </div>
+                    {% elif courses %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Course / Degree Program</label>
+                            <select name="course" class="form-select rounded-3">
+                                <option value="">Select Course</option>
+                                {% for c in courses %}
+                                    <option value="{{ c.id }}" {% if profile.course_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+
+                    {% if form.semester %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Current Semester</label>
+                            {{ form.semester }}
+                        </div>
+                    {% else %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Current Semester</label>
+                            <input type="number" name="semester" value="{{ profile.semester|default:1 }}" min="1" max="12" class="form-control rounded-3">
+                        </div>
+                    {% endif %}
+
+                    {% if form.batch_session %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Academic Session</label>
+                            {{ form.batch_session }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Personal & Guardian Details</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Gender</label>
+                        {{ form.gender }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Date of Birth</label>
+                        {{ form.date_of_birth }}
+                    </div>
+                    {% if form.blood_group %}
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Blood Group</label>
+                            {{ form.blood_group }}
+                        </div>
+                    {% endif %}
+                    {% if form.avatar %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Profile Photo</label>
+                            {{ form.avatar }}
+                        </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Guardian Name</label>
+                        {{ form.guardian_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Guardian Phone</label>
+                        {{ form.guardian_phone }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Address</label>
+                        {{ form.address }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <a href="{% url 'admin_students' %}" class="btn btn-acadify-outline">Cancel</a>
+                    <button type="submit" class="btn btn-acadify">Save Student Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load classroom_tags %}
+
+{% block title %}Assignments - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Assignments</h2>
+        <p class="page-subtitle">Academic tasks, project submissions, deadlines, and faculty evaluations</p>
+    </div>
+    {% if request.user.is_teacher_user or request.user.is_admin_user %}
+        <a href="{% url 'teacher_assignment_create' %}" class="btn btn-acadify">
+            <i class="bi bi-plus-circle me-1"></i> Create Assignment
+        </a>
+    {% endif %}
+</div>
+
+<!-- Search & Status Filter -->
+<div class="acadify-card mb-4 p-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by title, topic, or subject code...">
+            </div>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center">Search</button>
+            {% if query %}
+                <a href="{% url 'student_assignments' %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Assignments Table (Screen 9) -->
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Subject</th>
+                        <th>Due Date</th>
+                        <th>Max Marks</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ a.title }}</div>
+                                <span class="small text-muted">{{ a.description|truncatewords:8 }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary">{{ a.subject.code }}</div>
+                                <span class="small text-muted">{{ a.subject.name }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold {% if today > a.due_date %}text-danger{% else %}text-dark{% endif %}">
+                                    {{ a.due_date|date:"d M Y" }}
+                                </div>
+                                {% if today > a.due_date %}
+                                    <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">Expired</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ a.max_marks }} pts</td>
+                            <td>
+                                {% if request.user.is_student_user %}
+                                    {% with sub=student_submissions|dict_lookup:a.id %}
+                                        {% if sub %}
+                                            {% if sub.status == 'GRADED' %}
+                                                <span class="badge badge-present">Graded ({{ sub.marks_obtained }}/{{ a.max_marks }})</span>
+                                            {% elif sub.status == 'LATE' %}
+                                                <span class="badge badge-late">Late Submission</span>
+                                            {% else %}
+                                                <span class="badge bg-info-subtle text-info border">Submitted</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge badge-absent">Pending</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">{{ a.submissions.count }} Submissions</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    {% if a.attachment %}
+                                        <a href="{{ a.attachment.url }}" class="btn-sm-action" download title="Download Attachment">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    {% endif %}
+
+                                    {% if request.user.is_student_user %}
+                                        <a href="{% url 'student_assignment_submit' a.id %}" class="btn-sm-action" title="Submit Solution">
+                                            <i class="bi bi-upload"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'assignment_submissions' a.id %}" class="btn-sm-action" title="View Student Submissions">
+                                            <i class="bi bi-inbox"></i>
+                                        </a>
+                                        <a href="{% url 'teacher_assignment_edit' a.id %}" class="btn-sm-action" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="POST" action="{% url 'teacher_assignment_delete' a.id %}" class="d-inline" onsubmit="return confirm('Delete this assignment?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-sm-action danger border-0" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-clipboard-x"></i></div>
+            <div class="empty-state-title">No assignments found</div>
+            <p class="empty-state-desc">There are no academic tasks or homework assignments published at this time.</p>
+            {% if request.user.is_teacher_user or request.user.is_admin_user %}
+                <a href="{% url 'teacher_assignment_create' %}" class="btn btn-acadify">Create First Assignment</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

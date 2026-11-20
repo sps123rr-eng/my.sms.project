@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Subject - Acadify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title">Edit Subject</h2>
+                <p class="page-subtitle">{{ subject.name }} ({{ subject.code }})</p>
+            </div>
+            <a href="{% url 'admin_subjects' %}" class="btn btn-acadify-outline">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="acadify-card">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Subject Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Subject Code *</label>
+                        {{ form.code }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold">Course *</label>
+                        {{ form.course }}
+                    </div>
+                </div>
+                <div class="row g-2 mb-4">
+                    <div class="col-4">
+                        <label class="form-label small fw-bold">Semester</label>
+                        {{ form.semester }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-bold">Credits</label>
+                        {{ form.credits }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-bold">Type</label>
+                        {{ form.subject_type }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="{% url 'admin_subjects' %}" class="btn btn-acadify-outline">Cancel</a>
+                    <button type="submit" class="btn btn-acadify">Update Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

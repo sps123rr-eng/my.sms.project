@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Grade Submission - Acadify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title">Grade Submission</h2>
+                <p class="page-subtitle">{{ submission.assignment.title }} &bull; {{ submission.student.user.display_name }} ({{ submission.student.student_id }})</p>
+            </div>
+            <a href="{% url 'assignment_submissions' submission.assignment.id %}" class="btn btn-acadify-outline">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <!-- Student Submission Overview -->
+        <div class="acadify-card mb-4">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Submitted Work</h6>
+            <div class="mb-3">
+                <span class="text-muted small d-block">Submitted At:</span>
+                <strong>{{ submission.submitted_at|date:"d M Y, H:i" }}</strong>
+            </div>
+
+            {% if submission.notes %}
+                <div class="mb-3 p-3 bg-light rounded-3">
+                    <span class="text-muted small d-block mb-1">Student Notes:</span>
+                    <p class="mb-0 small text-dark">{{ submission.notes|linebreaks }}</p>
+                </div>
+            {% endif %}
+
+            {% if submission.attachment %}
+                <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-file-earmark-code fs-4 text-primary me-2"></i>
+                        <span class="fw-bold small text-dark">Student Attachment</span>
+                    </div>
+                    <a href="{{ submission.attachment.url }}" download class="btn btn-sm btn-acadify">
+                        <i class="bi bi-download me-1"></i> Download Solution File
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Grading Form Card -->
+        <div class="acadify-card">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Award Evaluation</h6>
+            <form method="POST">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Marks Obtained (Out of {{ submission.assignment.max_marks }}) *</label>
+                        {{ form.marks_obtained }}
+                        {% if form.marks_obtained.errors %}<div class="text-danger small">{{ form.marks_obtained.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Status *</label>
+                        {{ form.status }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Faculty Feedback & Remarks</label>
+                    {{ form.feedback }}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="{% url 'assignment_submissions' submission.assignment.id %}" class="btn btn-acadify-outline">Cancel</a>
+                    <button type="submit" class="btn btn-acadify">Save Evaluation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

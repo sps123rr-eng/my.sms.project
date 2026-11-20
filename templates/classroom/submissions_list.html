@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Submissions - {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Assignment Submissions</h2>
+        <p class="page-subtitle">{{ assignment.title }} &bull; {{ assignment.subject.name }} ({{ assignment.subject.code }})</p>
+    </div>
+    <a href="{% url 'teacher_assignments' %}" class="btn btn-acadify-outline">
+        <i class="bi bi-arrow-left me-1"></i> Back to Assignments
+    </a>
+</div>
+
+<div class="acadify-card">
+    <div class="card-title-header">
+        <h5>Student Submissions ({{ submissions|length }} Total)</h5>
+        <span class="badge bg-light text-primary border">Max: {{ assignment.max_marks }} marks</span>
+    </div>
+
+    {% if submissions %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Submitted At</th>
+                        <th>File Attachment</th>
+                        <th>Marks</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in submissions %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ sub.student.student_id }}</td>
+                            <td>{{ sub.student.user.display_name }}</td>
+                            <td>{{ sub.submitted_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                {% if sub.attachment %}
+                                    <a href="{{ sub.attachment.url }}" download class="btn btn-sm btn-light border small text-primary fw-bold">
+                                        <i class="bi bi-download me-1"></i> Download Solution
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">No file</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sub.marks_obtained is not None %}
+                                    <strong class="text-dark">{{ sub.marks_obtained }}</strong> / {{ assignment.max_marks }}
+                                {% else %}
+                                    <span class="text-muted">Not graded</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sub.status == 'GRADED' %}
+                                    <span class="badge badge-present">Graded</span>
+                                {% elif sub.status == 'LATE' %}
+                                    <span class="badge badge-late">Late</span>
+                                {% else %}
+                                    <span class="badge bg-info-subtle text-info border">Submitted</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'submission_grade' sub.id %}" class="btn btn-sm btn-acadify py-1 px-3">
+                                    <i class="bi bi-pencil-square me-1"></i> Grade
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+            <div class="empty-state-title">No submissions yet</div>
+            <p class="empty-state-desc">Students enrolled in this course have not submitted their solutions yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

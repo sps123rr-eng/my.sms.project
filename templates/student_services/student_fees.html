@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Fee Details - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Fee Details</h2>
+        <p class="page-subtitle">College tuition, semester installments, lab charges, and payment receipts</p>
+    </div>
+</div>
+
+<!-- Fee Metrics Summary -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper stat-icon-success">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Amount Paid</span>
+                <span class="stat-value text-success">${{ total_paid }}</span>
+                <span class="stat-trend trend-up"><i class="bi bi-check-circle-fill"></i> Settled dues</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="acadify-card stat-card mb-0">
+            <div class="stat-icon-wrapper {% if total_due > 0 %}stat-icon-danger{% else %}stat-icon-info{% endif %}">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-label">Total Pending Dues</span>
+                <span class="stat-value {% if total_due > 0 %}text-danger{% else %}text-muted{% endif %}">${{ total_due }}</span>
+                <span class="stat-trend {% if total_due > 0 %}trend-down{% else %}trend-neutral{% endif %}">
+                    {% if total_due > 0 %}Action required{% else %}All fees cleared{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Invoices Table (Screen 14) -->
+<div class="acadify-card">
+    <div class="card-title-header">
+        <h5>Semester Invoices & History</h5>
+        <span class="badge bg-light text-muted border">Payment Records</span>
+    </div>
+
+    {% if fees %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Semester</th>
+                        <th>Fee Particulars</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Receipt Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in fees %}
+                        <tr>
+                            <td class="fw-bold">Semester {{ f.semester }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ f.title }}</div>
+                                {% if f.payment_method %}
+                                    <span class="small text-muted"><i class="bi bi-credit-card me-1"></i> Paid via {{ f.payment_method }} on {{ f.paid_date|date:"d M Y" }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">${{ f.amount }}</td>
+                            <td>{{ f.due_date|date:"d M Y" }}</td>
+                            <td>
+                                {% if f.status == 'PAID' %}
+                                    <span class="badge badge-paid">Paid</span>
+                                {% elif f.status == 'OVERDUE' %}
+                                    <span class="badge badge-absent">Overdue</span>
+                                {% else %}
+                                    <span class="badge badge-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if f.receipt_number %}
+                                    <span class="badge bg-light text-dark border fw-bold">{{ f.receipt_number }}</span>
+                                {% else %}
+                                    <span class="text-muted small">&ndash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-credit-card"></i></div>
+            <div class="empty-state-title">No fee invoices recorded</div>
+            <p class="empty-state-desc">There are no semester tuition or fee records generated for your enrollment record.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Profile - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Faculty Profile</h2>
+        <p class="page-subtitle">View and manage your academic staff credentials and department assignments</p>
+    </div>
+    <button class="btn btn-acadify" type="button" data-bs-toggle="collapse" data-bs-target="#editProfileCollapse">
+        <i class="bi bi-pencil-square"></i>
+        <span>Edit Profile</span>
+    </button>
+</div>
+
+<!-- Header Card -->
+<div class="acadify-card mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-4">
+        {% if profile.user.avatar %}
+            <img src="{{ profile.user.avatar.url }}" alt="{{ profile.user.display_name }}" class="rounded-circle border" style="width: 90px; height: 90px; object-fit: cover;">
+        {% else %}
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 90px; height: 90px;">
+                {{ profile.user.first_name|default:profile.user.username|slice:":1"|upper }}
+            </div>
+        {% endif %}
+        <div>
+            <h3 class="fw-bold text-dark mb-1">{{ profile.user.display_name }}</h3>
+            <p class="text-muted mb-2">
+                {{ profile.designation }} &bull; {{ profile.department.name|default:"General Faculty" }}
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-light text-primary border px-3 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-person-badge me-1"></i> Employee ID: {{ profile.employee_id }}
+                </span>
+                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-door-closed me-1"></i> Office: {{ profile.office_room|default:"Room 101" }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Collapse -->
+<div class="collapse mb-4" id="editProfileCollapse">
+    <div class="acadify-card border border-primary border-opacity-25">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-pencil-fill text-primary me-2"></i>Edit Faculty Information</h5>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'teacher_profile' %}">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Designation</label>
+                    {{ form.designation }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Qualification</label>
+                    {{ form.qualification }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Office Room</label>
+                    {{ form.office_room }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Profile Photo</label>
+                    {{ form.avatar }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Address / Campus Quarters</label>
+                    {{ form.address }}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-acadify-outline" data-bs-toggle="collapse" data-bs-target="#editProfileCollapse">Cancel</button>
+                <button type="submit" class="btn btn-acadify">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Faculty Information</h5>
+                <span class="badge bg-light text-primary border">Active</span>
+            </div>
+            <table class="table table-borderless align-middle mb-0">
+                <tbody>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0" style="width: 140px;">Employee ID</td>
+                        <td class="fw-bold text-dark">{{ profile.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Email</td>
+                        <td class="fw-bold text-dark">{{ profile.user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Phone</td>
+                        <td class="fw-bold text-dark">{{ profile.user.phone|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Qualification</td>
+                        <td class="fw-bold text-dark">{{ profile.qualification|default:"Ph.D / M.Tech" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Joining Date</td>
+                        <td class="fw-bold text-dark">{{ profile.joining_date|date:"d M Y"|default:"Not specified" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Department & Teaching Assignment</h5>
+            </div>
+            <table class="table table-borderless align-middle mb-0">
+                <tbody>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0" style="width: 140px;">Department</td>
+                        <td class="fw-bold text-dark">{{ profile.department.name|default:"Not assigned" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Department Code</td>
+                        <td class="fw-bold text-dark">{{ profile.department.code|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Office Location</td>
+                        <td class="fw-bold text-dark">{{ profile.office_room|default:"Main Academic Block" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold ps-0">Assigned Subjects</td>
+                        <td class="fw-bold text-dark">{{ profile.teaching_assignments.count }} assigned</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Management - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Grievance & Complaint Desk</h2>
+        <p class="page-subtitle">Track, investigate, and resolve student complaints and campus maintenance requests</p>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="acadify-card mb-4 p-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by student ID, subject or description...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                <option value="IN_REVIEW" {% if selected_status == 'IN_REVIEW' %}selected{% endif %}>In-Review</option>
+                <option value="RESOLVED" {% if selected_status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center">Filter</button>
+            {% if query or selected_status %}
+                <a href="{% url 'admin_complaints' %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Complaints Table -->
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Category</th>
+                        <th>Subject</th>
+                        <th>Submitted At</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ c.student.user.display_name }}</div>
+                                <span class="small text-muted">{{ c.student.student_id }}</span>
+                            </td>
+                            <td><span class="badge badge-category">{{ c.get_category_display }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ c.subject }}</div>
+                                <span class="small text-muted">{{ c.description|truncatewords:8 }}</span>
+                            </td>
+                            <td>{{ c.created_at|date:"d M Y" }}</td>
+                            <td>
+                                {% if c.status == 'RESOLVED' %}
+                                    <span class="badge badge-present">Resolved</span>
+                                {% elif c.status == 'IN_REVIEW' %}
+                                    <span class="badge badge-late">In-Review</span>
+                                {% else %}
+                                    <span class="badge badge-absent">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-acadify py-1 px-3" data-bs-toggle="modal" data-bs-target="#respondModal{{ c.id }}">
+                                    Respond
+                                </button>
+
+                                <!-- Modal -->
+                                <div class="modal fade text-start" id="respondModal{{ c.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <div class="modal-header border-bottom pb-3">
+                                                <h5 class="modal-title fw-bold">Address Grievance Ticket</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="{% url 'admin_complaint_respond' c.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <p class="mb-1"><strong>Student:</strong> {{ c.student.user.display_name }} ({{ c.student.student_id }})</p>
+                                                    <p class="mb-1"><strong>Topic:</strong> {{ c.subject }} [{{ c.get_category_display }}]</p>
+                                                    <p class="mb-3 small text-muted">"{{ c.description }}"</p>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-bold">Update Status *</label>
+                                                        <select name="status" class="form-select rounded-3">
+                                                            <option value="PENDING" {% if c.status == 'PENDING' %}selected{% endif %}>Pending</option>
+                                                            <option value="IN_REVIEW" {% if c.status == 'IN_REVIEW' %}selected{% endif %}>In-Review</option>
+                                                            <option value="RESOLVED" {% if c.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Administrative Response</label>
+                                                        <textarea name="admin_response" rows="3" class="form-control rounded-3" placeholder="Action taken or response to student...">{{ c.admin_response|default:'' }}</textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-top pt-3">
+                                                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-acadify">Save Response</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}&q={{ query }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}&q={{ query }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-chat-left-dots"></i></div>
+            <div class="empty-state-title">No grievance tickets found</div>
+            <p class="empty-state-desc">There are no student complaints matching the current status filter.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

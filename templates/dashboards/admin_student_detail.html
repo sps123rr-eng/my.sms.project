@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile.user.display_name }} - Acadify Profile{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">{{ profile.user.display_name }}</h2>
+        <p class="page-subtitle">Complete student profile, attendance records, exam results, and fee logs</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_student_edit' profile.id %}" class="btn btn-acadify">
+            <i class="bi bi-pencil-square me-1"></i> Edit Record
+        </a>
+        <a href="{% url 'admin_students' %}" class="btn btn-acadify-outline">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Header Card -->
+<div class="acadify-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-4">
+        <div class="d-flex align-items-center gap-4">
+            {% if profile.user.avatar %}
+                <img src="{{ profile.user.avatar.url }}" class="rounded-circle border" style="width: 80px; height: 80px; object-fit: cover;">
+            {% else %}
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 80px; height: 80px;">
+                    {{ profile.user.first_name|slice:":1"|upper }}
+                </div>
+            {% endif %}
+            <div>
+                <h4 class="fw-bold mb-1">{{ profile.user.display_name }}</h4>
+                <p class="text-muted mb-2">
+                    {{ profile.course.name|default:"Not enrolled" }} &bull; Semester {{ profile.semester }}
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-light text-primary border px-3 py-1 rounded-pill">
+                        ID: {{ profile.student_id }}
+                    </span>
+                    <span class="badge bg-light text-muted border px-3 py-1 rounded-pill">
+                        Dept: {{ profile.department.code|default:"-" }}
+                    </span>
+                    <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill">
+                        Batch: {{ profile.batch_session.name|default:"General" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3">
+            <div class="text-center p-3 rounded-3 bg-light border">
+                <span class="small text-muted d-block">Attendance</span>
+                <span class="fs-4 fw-bold text-success">{{ att_pct }}%</span>
+            </div>
+            <div class="text-center p-3 rounded-3 bg-light border">
+                <span class="small text-muted d-block">Total Logs</span>
+                <span class="fs-4 fw-bold text-dark">{{ total_att }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs for Attendance, Results, Fees -->
+<div class="acadify-card">
+    <ul class="nav nav-tabs border-bottom mb-4" id="studentDetailTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold py-2 px-4" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button">Personal Info</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold py-2 px-4" id="att-tab" data-bs-toggle="tab" data-bs-target="#att-pane" type="button">Recent Attendance</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold py-2 px-4" id="results-tab" data-bs-toggle="tab" data-bs-target="#results-pane" type="button">Exam Results</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold py-2 px-4" id="fees-tab" data-bs-toggle="tab" data-bs-target="#fees-pane" type="button">Fee Records</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="studentDetailTabsContent">
+        <!-- Tab 1: Personal Info -->
+        <div class="tab-pane fade show active" id="info-pane">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr><td class="text-muted fw-semibold">Email:</td><td class="fw-bold">{{ profile.user.email }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Phone:</td><td class="fw-bold">{{ profile.user.phone|default:"-" }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Date of Birth:</td><td class="fw-bold">{{ profile.date_of_birth|date:"d M Y"|default:"-" }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Gender:</td><td class="fw-bold">{{ profile.get_gender_display }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Blood Group:</td><td class="fw-bold">{{ profile.blood_group|default:"-" }}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr><td class="text-muted fw-semibold">Guardian Name:</td><td class="fw-bold">{{ profile.guardian_name|default:"-" }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Guardian Phone:</td><td class="fw-bold">{{ profile.guardian_phone|default:"-" }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Address:</td><td class="fw-bold">{{ profile.address|default:"-" }}</td></tr>
+                        <tr><td class="text-muted fw-semibold">Account Status:</td><td>{% if profile.user.is_active %}<span class="badge badge-present">Active</span>{% else %}<span class="badge badge-absent">Inactive</span>{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Attendance -->
+        <div class="tab-pane fade" id="att-pane">
+            {% if attendance_records %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr><th>Date</th><th>Subject</th><th>Status</th><th>Remarks</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for a in attendance_records %}
+                                <tr>
+                                    <td>{{ a.date|date:"d M Y" }}</td>
+                                    <td>{{ a.subject.name }} ({{ a.subject.code }})</td>
+                                    <td>
+                                        {% if a.status == 'PRESENT' %}<span class="badge badge-present">Present</span>
+                                        {% elif a.status == 'ABSENT' %}<span class="badge badge-absent">Absent</span>
+                                        {% elif a.status == 'LATE' %}<span class="badge badge-late">Late</span>
+                                        {% else %}<span class="badge badge-leave">Leave</span>{% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ a.remarks|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No attendance records logged for this student yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Tab 3: Results -->
+        <div class="tab-pane fade" id="results-pane">
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr><th>Exam</th><th>Subject</th><th>Internal</th><th>End Sem</th><th>Total</th><th>Grade</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for r in results %}
+                                <tr>
+                                    <td>{{ r.examination.name }}</td>
+                                    <td>{{ r.subject.code }}</td>
+                                    <td>{{ r.internal_marks }}</td>
+                                    <td>{{ r.end_sem_marks }}</td>
+                                    <td class="fw-bold text-dark">{{ r.total_marks }}/{{ r.max_marks }}</td>
+                                    <td><span class="badge bg-primary text-white">{{ r.grade }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No examination results recorded for this student yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Tab 4: Fees -->
+        <div class="tab-pane fade" id="fees-pane">
+            {% if fees %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr><th>Semester</th><th>Title</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Receipt</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for f in fees %}
+                                <tr>
+                                    <td>Sem {{ f.semester }}</td>
+                                    <td class="fw-bold">{{ f.title }}</td>
+                                    <td>${{ f.amount }}</td>
+                                    <td>{{ f.due_date|date:"d M Y" }}</td>
+                                    <td>
+                                        {% if f.status == 'PAID' %}<span class="badge badge-paid">Paid</span>
+                                        {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+                                    </td>
+                                    <td>{{ f.receipt_number|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No fee invoices recorded for this student yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

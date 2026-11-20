@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Management - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Campus Attendance</h2>
+        <p class="page-subtitle">College-wide student attendance tracking, audit logs, and export reporting</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="?export=csv&date={{ selected_date }}&subject={{ selected_subject }}&status={{ selected_status }}&q={{ query }}" class="btn btn-outline-success rounded-3 fw-bold small">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+        </a>
+    </div>
+</div>
+
+<!-- Today Overview Banner -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="acadify-card p-3 mb-0 d-flex align-items-center gap-3">
+            <div class="stat-icon-wrapper stat-icon-success" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+                <span class="small text-muted d-block">Today's Attendance Rate</span>
+                <span class="fs-4 fw-bold text-dark">{{ today_pct }}%</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="acadify-card p-3 mb-0 d-flex align-items-center gap-3">
+            <div class="stat-icon-wrapper stat-icon-primary" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <span class="small text-muted d-block">Present Count Today</span>
+                <span class="fs-4 fw-bold text-success">{{ today_present }} marked present</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="acadify-card p-3 mb-0 d-flex align-items-center gap-3">
+            <div class="stat-icon-wrapper stat-icon-info" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+                <span class="small text-muted d-block">Total Marked Today</span>
+                <span class="fs-4 fw-bold text-dark">{{ today_total }} records</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="acadify-card mb-4 p-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Student name or ID...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="date" value="{{ selected_date }}" class="form-control" placeholder="Filter Date">
+        </div>
+        <div class="col-md-3">
+            <select name="subject" class="form-select">
+                <option value="">All Subjects</option>
+                {% for s in subjects %}
+                    <option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>{{ s.code }} - {{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="PRESENT" {% if selected_status == 'PRESENT' %}selected{% endif %}>Present</option>
+                <option value="ABSENT" {% if selected_status == 'ABSENT' %}selected{% endif %}>Absent</option>
+                <option value="LATE" {% if selected_status == 'LATE' %}selected{% endif %}>Late</option>
+                <option value="LEAVE" {% if selected_status == 'LEAVE' %}selected{% endif %}>Leave</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+            <button type="submit" class="btn btn-acadify w-100 justify-content-center p-2"><i class="bi bi-funnel"></i></button>
+            {% if query or selected_date or selected_subject or selected_status %}
+                <a href="{% url 'admin_attendance' %}" class="btn btn-light border p-2"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Attendance Records Table -->
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Marked By</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in page_obj %}
+                        <tr>
+                            <td class="fw-bold text-dark">{{ r.date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin_student_detail' r.student.id %}" class="fw-bold text-primary text-decoration-none">
+                                    {{ r.student.student_id }}
+                                </a>
+                            </td>
+                            <td>{{ r.student.user.display_name }}</td>
+                            <td>
+                                <div class="fw-bold">{{ r.subject.code }}</div>
+                                <span class="small text-muted">{{ r.subject.name|truncatewords:4 }}</span>
+                            </td>
+                            <td>
+                                {% if r.status == 'PRESENT' %}
+                                    <span class="badge badge-present">Present</span>
+                                {% elif r.status == 'ABSENT' %}
+                                    <span class="badge badge-absent">Absent</span>
+                                {% elif r.status == 'LATE' %}
+                                    <span class="badge badge-late">Late</span>
+                                {% else %}
+                                    <span class="badge badge-leave">Leave</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ r.marked_by.display_name|default:"Admin" }}</td>
+                            <td class="small text-muted">{{ r.remarks|default:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&date={{ selected_date }}&subject={{ selected_subject }}&status={{ selected_status }}&q={{ query }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&date={{ selected_date }}&subject={{ selected_subject }}&status={{ selected_status }}&q={{ query }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-calendar2-x"></i></div>
+            <div class="empty-state-title">No attendance records found</div>
+            <p class="empty-state-desc">There are no attendance logs matching your current search or date parameters.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Login - Acadify Student Management Portal{% endblock %}
+
+{% block auth_content %}
+<div class="mb-4">
+    <h3 class="fw-bold text-dark mb-1">Welcome Back!</h3>
+    <p class="text-muted small">Login to your account to continue</p>
+</div>
+
+<form method="POST" action="{% url 'login' %}" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+            {% for error in form.non_field_errors %}
+                <div><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label for="{{ form.username_or_email.id_for_label }}" class="form-label small fw-bold text-dark">Username or Email</label>
+        <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3"><i class="bi bi-person"></i></span>
+            {{ form.username_or_email }}
+        </div>
+        {% if form.username_or_email.errors %}
+            <div class="text-danger small mt-1">{{ form.username_or_email.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label for="{{ form.password.id_for_label }}" class="form-label small fw-bold text-dark mb-0">Password</label>
+            <a href="{% url 'password_reset' %}" class="small text-primary text-decoration-none fw-semibold">Forgot password?</a>
+        </div>
+        <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3"><i class="bi bi-lock"></i></span>
+            {{ form.password }}
+        </div>
+        {% if form.password.errors %}
+            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-4 form-check">
+        {{ form.remember_me }}
+        <label class="form-check-label small text-muted" for="{{ form.remember_me.id_for_label }}">
+            Remember me
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-acadify w-100 py-2 justify-content-center">
+        <span>Login</span>
+        <i class="bi bi-arrow-right"></i>
+    </button>
+
+    <div class="text-center mt-4 pt-2">
+        <p class="small text-muted mb-0">
+            Don't have an account? 
+            <a href="{% url 'register' %}" class="text-primary fw-bold text-decoration-none">Register here</a>
+        </p>
+    </div>
+</form>
+{% endblock %}

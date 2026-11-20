@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}All Submissions - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">Student Submissions</h2>
+        <p class="page-subtitle">Review, evaluate, and grade assignments across your academic courses</p>
+    </div>
+</div>
+
+<div class="acadify-card">
+    {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Assignment</th>
+                        <th>Student</th>
+                        <th>Submitted At</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ sub.assignment.title }}</div>
+                                <span class="small text-muted">{{ sub.assignment.subject.code }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ sub.student.user.display_name }}</div>
+                                <span class="small text-muted">{{ sub.student.student_id }}</span>
+                            </td>
+                            <td>{{ sub.submitted_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                {% if sub.status == 'GRADED' %}
+                                    <span class="badge badge-present">Graded</span>
+                                {% elif sub.status == 'LATE' %}
+                                    <span class="badge badge-late">Late Submission</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border">Needs Review</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sub.marks_obtained is not None %}
+                                    <strong>{{ sub.marks_obtained }}</strong> / {{ sub.assignment.max_marks }}
+                                {% else %}
+                                    <span class="text-muted">&ndash;</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'submission_grade' sub.id %}" class="btn btn-sm btn-acadify py-1 px-3">
+                                    <i class="bi bi-pencil-square me-1"></i> Grade
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+            <div class="empty-state-title">No submissions to review</div>
+            <p class="empty-state-desc">When students submit solutions to assignments, they will appear here for grading.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

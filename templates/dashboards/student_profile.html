@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Profile - Acadify{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <h2 class="page-title">My Profile</h2>
+        <p class="page-subtitle">View and update your personal and academic record</p>
+    </div>
+    <button class="btn btn-acadify" type="button" data-bs-toggle="collapse" data-bs-target="#editProfileCollapse">
+        <i class="bi bi-pencil-square"></i>
+        <span>Edit Profile</span>
+    </button>
+</div>
+
+<!-- Profile Header Card (Matching Screen 6) -->
+<div class="acadify-card mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-4">
+        {% if profile.user.avatar %}
+            <img src="{{ profile.user.avatar.url }}" alt="{{ profile.user.display_name }}" class="rounded-circle border" style="width: 90px; height: 90px; object-fit: cover;">
+        {% else %}
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-2" style="width: 90px; height: 90px;">
+                {{ profile.user.first_name|default:profile.user.username|slice:":1"|upper }}
+            </div>
+        {% endif %}
+        <div>
+            <h3 class="fw-bold text-dark mb-1">{{ profile.user.display_name }}</h3>
+            <p class="text-muted mb-2">
+                {{ profile.course.name|default:"Not enrolled in course" }} 
+                {% if profile.department %}&bull; {{ profile.department.name }}{% endif %}
+                &bull; Semester {{ profile.semester }}
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-light text-primary border px-3 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-person-badge me-1"></i> ID: {{ profile.student_id }}
+                </span>
+                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-semibold">
+                    <i class="bi bi-calendar-event me-1"></i> Batch: {{ profile.batch_session.name|default:"General" }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Collapse -->
+<div class="collapse mb-4" id="editProfileCollapse">
+    <div class="acadify-card border border-primary border-opacity-25">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-pencil-fill text-primary me-2"></i>Edit Personal Information</h5>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'student_profile' %}">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Date of Birth</label>
+                    {{ form.date_of_birth }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Gender</label>
+                    {{ form.gender }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Blood Group</label>
+                    {{ form.blood_group }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Profile Photo</label>
+                    {{ form.avatar }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Guardian Name</label>
+                    {{ form.guardian_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Guardian Phone</label>
+                    {{ form.guardian_phone }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Address</label>
+                    {{ form.address }}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-acadify-outline" data-bs-toggle="collapse" data-bs-target="#editProfileCollapse">Cancel</button>
+                <button type="submit" class="btn btn-acadify">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Details Grid Matching Reference Screen 6 -->
+<div class="row g-4">
+    <!-- Personal Information Card -->
+    <div class="col-lg-6">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Personal Information</h5>
+                <span class="badge bg-light text-muted border">Private</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0" style="width: 140px;">Student ID</td>
+                            <td class="fw-bold text-dark">{{ profile.student_id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Email</td>
+                            <td class="fw-bold text-dark">{{ profile.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Phone</td>
+                            <td class="fw-bold text-dark">{{ profile.user.phone|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Date of Birth</td>
+                            <td class="fw-bold text-dark">{{ profile.date_of_birth|date:"d M Y"|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Gender</td>
+                            <td class="fw-bold text-dark">{{ profile.get_gender_display }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Blood Group</td>
+                            <td class="fw-bold text-dark">{{ profile.blood_group|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Address</td>
+                            <td class="fw-bold text-dark">{{ profile.address|default:"Not provided" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Information Card -->
+    <div class="col-lg-6">
+        <div class="acadify-card h-100">
+            <div class="card-title-header">
+                <h5>Academic Information</h5>
+                <span class="badge bg-light text-primary border">Enrolled</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0" style="width: 140px;">Department</td>
+                            <td class="fw-bold text-dark">{{ profile.department.name|default:"Not assigned" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Course</td>
+                            <td class="fw-bold text-dark">{{ profile.course.name|default:"Not assigned" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Current Semester</td>
+                            <td class="fw-bold text-dark">Semester {{ profile.semester }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Batch / Session</td>
+                            <td class="fw-bold text-dark">{{ profile.batch_session.name|default:"Current Session" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Guardian Name</td>
+                            <td class="fw-bold text-dark">{{ profile.guardian_name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted fw-semibold ps-0">Guardian Contact</td>
+                            <td class="fw-bold text-dark">{{ profile.guardian_phone|default:"-" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
